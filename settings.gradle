@@ -1,1 +1,1 @@
-include ':app', ':flow'
+include ':app', ':library'
