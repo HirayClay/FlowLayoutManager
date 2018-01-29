@@ -33,28 +33,29 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 
     private void fill(RecyclerView.Recycler recycler, RecyclerView.State state) {
         int width = getWidth();
-        int height = getHeight();
-        int remainingSpace = width;
+        int remainingHeight = getHeight();
+        int remainingWidth = width;
         int viewWidth;
         int start = 0;
         Row row = new Row(this);
         for (int i = 0; i < state.getItemCount(); i++) {
+            if (remainingHeight <= 0)
+                break;
             View view = recycler.getViewForPosition(i);
             measureChild(view, 0, 0);
-            addView(view);
             RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
             viewWidth = view.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
-            if (viewWidth <= remainingSpace && height > 0) {
-                remainingSpace -= viewWidth;
+            if (viewWidth <= remainingWidth) {
+                remainingWidth -= viewWidth;
                 row.addView(view);
-            } else if (viewWidth > remainingSpace) {
-                height -= row.getRowHeight();
+            } else if (viewWidth > remainingWidth) {
+                remainingHeight -= row.getRowHeight();
                 row.setCoordinate(start);
+                start += row.getRowHeight();
                 row.layout();
                 row = new Row(this);
                 row.addView(view);
-                remainingSpace = width;
-                start += row.getRowHeight();
+                remainingWidth = width - viewWidth;
             }
         }
     }

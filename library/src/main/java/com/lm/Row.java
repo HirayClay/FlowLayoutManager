@@ -29,17 +29,15 @@ public class Row {
     public int getRowHeight() {
         if (NaN != rowHeight)
             return rowHeight;
-        int h = 0;
         for (View v :
                 views) {
             RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) v.getLayoutParams();
             int vh = v.getMeasuredHeight() + lp.topMargin + lp.bottomMargin;
 
-            if (vh > h)
-                h = vh;
+            if (vh > rowHeight)
+                rowHeight = vh;
         }
-        rowHeight = h;
-        return h;
+        return rowHeight;
     }
 
     public void addView(View itemView) {
@@ -63,12 +61,14 @@ public class Row {
         int left = 0, top, right, bottom;
         for (int i = 0; i < size; i++) {
             View view = views.get(i);
+            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
             layoutManager.addView(view);
-            right = left + view.getMeasuredWidth();
+            left += lp.leftMargin;
+            right = left + view.getMeasuredWidth()+lp.rightMargin;
             top = rowHeight / 2 - view.getMeasuredHeight() / 2 + coordinate;
             bottom = top + view.getMeasuredHeight();
-            layoutManager.layoutDecoratedWithMargins(view, left, top, right, bottom);
-            left += view.getMeasuredWidth();
+            layoutManager.layoutDecorated(view, left, top, right, bottom);
+            left = right;
         }
     }
 
