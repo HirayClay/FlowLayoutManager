@@ -64,7 +64,7 @@ public class Row {
             RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
             layoutManager.addView(view);
             left += lp.leftMargin;
-            right = left + view.getMeasuredWidth()+lp.rightMargin;
+            right = left + view.getMeasuredWidth() + lp.rightMargin;
             top = rowHeight / 2 - view.getMeasuredHeight() / 2 + coordinate;
             bottom = top + view.getMeasuredHeight();
             layoutManager.layoutDecorated(view, left, top, right, bottom);
@@ -74,5 +74,17 @@ public class Row {
 
     public void setCoordinate(int coordinate) {
         this.coordinate = coordinate;
+    }
+
+    public boolean willBeOut(int offset) {
+        return coordinate + getRowHeight() - offset <= 0 || coordinate + offset >= layoutManager.getHeight();
+    }
+
+    /**
+     * 发生滑动之后，更新基准坐标
+     * @param delta applied to coordinate
+     */
+    public void updateCooordinate(int delta) {
+        coordinate += delta;
     }
 }
