@@ -21,6 +21,8 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
     private View rowClosestToStart;
     private RecyclerEx mRecyclerEx;
     private AnchorRow mAnchorInfo = new AnchorRow();
+    private OrientationHelper mOrientationHelper;
+    private LayoutRowResult mLayoutRowResult = new LayoutRowResult();
 
     public FlowLayoutManager() {
         setAutoMeasureEnabled(true);
@@ -28,50 +30,70 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 
     @Override
     public void onLayoutChildren(RecyclerView.Recycler recycler, RecyclerView.State state) {
-        ensureRecyclerEx(recycler);
+        ensureLayoutState();
+        ensureRecyclerEx(recycler, state);
         onLayoutChildrenInternal(mRecyclerEx, state);
     }
 
-    private void ensureRecyclerEx(RecyclerView.Recycler recycler) {
+    private void ensureLayoutState() {
+        if (mLayoutState == null)
+            mLayoutState = new LayoutState();
+        if (mOrientationHelper == null)
+            mOrientationHelper = OrientationHelper.create(this);
+    }
+
+    private void ensureRecyclerEx(RecyclerView.Recycler recycler, RecyclerView.State state) {
         if (mRecyclerEx == null)
-            mRecyclerEx = new RecyclerEx(recycler);
+            mRecyclerEx = new RecyclerEx(recycler, this, state);
     }
 
     private void onLayoutChildrenInternal(RecyclerEx recyclerEx, RecyclerView.State state) {
         updateAnchorInfo(mRecyclerEx, state, mAnchorInfo);
+        prepareRows(recyclerEx);
         detachAndScrapAttachedViews(recyclerEx.real());
-        updateLayoutState();
+        updateLayoutStateToFillEnd(mAnchorInfo);
+        fill(recyclerEx, mLayoutState, state);
+    }
+
+    private void updateLayoutStateToFillEnd(AnchorRow anchorInfo) {
+        updateLayoutStateToFillEnd(anchorInfo.mPosition, anchorInfo.mCoordinate);
+    }
+
+    private void updateLayoutStateToFillEnd(int itemPosition, int offset) {
+        mLayoutState.mAvailable = mOrientationHelper.getEndAfterPadding() - offset;
+        mLayoutState.mItemDirection = LayoutState.ITEM_DIRECTION_TAIL;
+        mLayoutState.mCurrentPosition = itemPosition;
+        mLayoutState.mLayoutDirection = LayoutState.LAYOUT_END;
+        mLayoutState.mOffset = offset;
+        mLayoutState.mScrollingOffset = LayoutState.SCROLLING_OFFSET_NaN;
+    }
+
+    private void prepareRows(RecyclerEx recyclerEx) {
+        if (mAnchorInfo.mCoordinate == 0) {
+            recyclerEx.prepareRowsFromStart();
+        }
     }
 
     private int fill(RecyclerEx recyclerEx, LayoutState layoutState, RecyclerView.State state) {
-        int width = getWidth();
-        int remainingHeight = getHeight();
-        int remainingWidth = width;
-        int viewWidth;
-        int start = 0;
-        Row row = new Row(this);
-        for (int i = 0; i < state.getItemCount(); i++) {
-            if (remainingHeight <= 0)
-                break;
-            View view = recyclerEx.getViewForPosition(i);
-            measureChild(view, 0, 0);
-            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
-            viewWidth = view.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
-            if (viewWidth <= remainingWidth) {
-                remainingWidth -= viewWidth;
-                row.addView(view);
-            } else if (viewWidth > remainingWidth) {
-                remainingHeight -= row.getRowHeight();
-                row.setCoordinate(start);
-                start += row.getRowHeight();
-                row.layout();
-                rows.add(row);
-                row = new Row(this);
-                row.addView(view);
-                remainingWidth = width - viewWidth;
-            }
+
+        final int start = layoutState.mAvailable;
+
+        int remainingSpace = start + layoutState.mExtra;
+        LayoutRowResult layoutRowResult = mLayoutRowResult;
+        while (remainingSpace > 0 && layoutState.hasMore(state)) {
+            layoutRowResult.resetInternal();
+            layoutChunk(recyclerEx, state, layoutState, layoutRowResult);
         }
-        return 0;
+        return start - layoutState.mAvailable;
+    }
+
+    private void layoutChunk(RecyclerEx recyclerEx, RecyclerView.State state,
+                             LayoutState layoutState, LayoutRowResult layoutRowResult) {
+        Row row = layoutState.next(recyclerEx);
+        row.layout();
+        layoutRowResult.mIgnoreConsumed = false;
+        layoutRowResult.mConsumed = row.getRowHeight();
+
     }
 
 
@@ -83,7 +105,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
     private LayoutState mLayoutState = new LayoutState();
 
     private int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
-        return scrollInternal(dy, RecyclerEx.wrap(recycler), state);
+        return scrollInternal(dy, mRecyclerEx, state);
     }
 
     private int scrollInternal(int dy, RecyclerEx wrap, RecyclerView.State state) {
@@ -206,6 +228,19 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
          */
         int mLastScrollDelta;
 
+        boolean hasMore(RecyclerView.State state) {
+            return mCurrentPosition >= 0 && mCurrentPosition < state.getItemCount();
+        }
+
+        Row next(RecyclerEx recyclerEx) {
+//            if (mScrapList != null) {
+//                return nextViewFromScrapList();
+//            }
+            final Row row = recyclerEx.getRowForPosition(mCurrentPosition);
+            mCurrentPosition += mItemDirection;
+            return row;
+        }
+
 
     }
 
@@ -307,6 +342,21 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 //            }
 //
 //            mPosition = getPosition(child);
+        }
+    }
+
+    class LayoutRowResult {
+
+        public int mConsumed;
+        public boolean mFinished;
+        public boolean mIgnoreConsumed;
+        public boolean mFocusable;
+
+        void resetInternal() {
+            mConsumed = 0;
+            mFinished = false;
+            mIgnoreConsumed = false;
+            mFocusable = false;
         }
     }
 }
