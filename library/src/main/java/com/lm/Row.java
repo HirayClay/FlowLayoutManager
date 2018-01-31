@@ -57,6 +57,8 @@ public class Row {
      * perform layout for views in this row
      */
     public void layout() {
+        if (rowHeight == NaN)
+            getRowHeight();
         int size = views.size();
         int left = 0, top, right, bottom;
         for (int i = 0; i < size; i++) {
@@ -82,6 +84,7 @@ public class Row {
 
     /**
      * 发生滑动之后，更新基准坐标
+     *
      * @param delta applied to coordinate
      */
     public void updateCooordinate(int delta) {

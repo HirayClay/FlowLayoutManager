@@ -73,7 +73,7 @@ public class RecyclerEx {
             }
 
             if (i == itemCount - 1) {
-                row.addView(view);
+                row.setCoordinate(start);
                 rowMap.put(rowIndex, row);
             }
         }

@@ -83,6 +83,18 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         while (remainingSpace > 0 && layoutState.hasMore(state)) {
             layoutRowResult.resetInternal();
             layoutChunk(recyclerEx, state, layoutState, layoutRowResult);
+            layoutState.mOffset += layoutRowResult.mConsumed * layoutState.mLayoutDirection;
+            if (!layoutRowResult.mIgnoreConsumed || !state.isPreLayout()/* || layoutState.mScrapList != null*/)
+                remainingSpace -= layoutRowResult.mConsumed;
+            if (layoutRowResult.mFinished)
+                break;
+            if (layoutState.mScrollingOffset != LayoutState.SCROLLING_OFFSET_NaN) {
+                layoutState.mScrollingOffset += layoutRowResult.mConsumed;
+                if (layoutState.mAvailable < 0) {
+                    layoutState.mScrollingOffset += layoutState.mAvailable;
+                }
+//                recycleByLayoutState(recycler, layoutState);
+            }
         }
         return start - layoutState.mAvailable;
     }
@@ -90,10 +102,13 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
     private void layoutChunk(RecyclerEx recyclerEx, RecyclerView.State state,
                              LayoutState layoutState, LayoutRowResult layoutRowResult) {
         Row row = layoutState.next(recyclerEx);
+        if (row == null) {
+            layoutRowResult.mFinished = true;
+            return;
+        }
         row.layout();
         layoutRowResult.mIgnoreConsumed = false;
         layoutRowResult.mConsumed = row.getRowHeight();
-
     }
 
 
