@@ -24,4 +24,12 @@ public class OrientationHelper {
     public int getEndAfterPadding() {
         return layoutManager.getHeight() - layoutManager.getPaddingBottom();
     }
+
+    public int getStartAfterPadding(){
+        return layoutManager.getPaddingTop();
+    }
+
+    public void offsetChildren(int amount) {
+        layoutManager.offsetChildrenVertical(amount);
+    }
 }

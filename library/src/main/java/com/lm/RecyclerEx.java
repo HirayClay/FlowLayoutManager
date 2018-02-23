@@ -5,6 +5,7 @@ import android.util.ArrayMap;
 import android.view.View;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -32,12 +33,40 @@ public class RecyclerEx {
         if (rowMap.containsKey(position)) {
             return rowMap.get(position);
         }
+
         Set<Integer> posSet = rowMap.keySet();
         //获取最后一个已经存在的Row
         int lastPos = Collections.max(posSet);
-//        if (lastPos < position)
-//            return createRowAfter(lastPos);
+        if (position > lastPos) {
+            Row lastRow = rowMap.get(lastPos);
+            View view = lastRow.lastView();
+            int startPos = layoutManager.getPosition(view);
+            return newRowFrom(startPos + 1, lastPos + 1, lastRow.getEnd());
+        }
         return null;
+    }
+
+    private Row newRowFrom(int startPos, int rowIndex, int coordinate) {
+        int itemCount = state.getItemCount();
+        if (startPos > itemCount - 1)
+            return null;
+        int width = layoutManager.getWidth(), viewWidth;
+        Row row = new Row(layoutManager);
+        for (int i = startPos; i < itemCount; i++) {
+            View view = recycler.getViewForPosition(i);
+            layoutManager.measureChild(view, 0, 0);
+            RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) view.getLayoutParams();
+            viewWidth = view.getMeasuredWidth() + lp.leftMargin + lp.rightMargin;
+            if (viewWidth <= width) {
+                width -= viewWidth;
+                row.addView(view);
+            } else break;
+        }
+        row.setCoordinate(coordinate);
+        row.setIndex(rowIndex);
+        rowMap.put(rowIndex, row);
+        return row;
+
     }
 
     public RecyclerView.Recycler real() {
@@ -68,14 +97,36 @@ public class RecyclerEx {
                 start += row.getRowHeight();
                 rowMap.put(rowIndex++, row);
                 row = new Row(layoutManager);
+                row.setIndex(rowIndex-1);
                 row.addView(view);
                 remainingWidth = width - viewWidth;
             }
 
             if (i == itemCount - 1) {
                 row.setCoordinate(start);
+                row.setIndex(rowIndex);
                 rowMap.put(rowIndex, row);
             }
+        }
+    }
+
+    public Row getRowForView(View view) {
+        Set<Map.Entry<Integer, Row>> entries = rowMap.entrySet();
+        for (Map.Entry<Integer, Row> entry :
+                entries) {
+            if (entry.getValue().has(view))
+                return entry.getValue();
+
+        }
+        return null;
+    }
+
+    public void updateRowCoordinate(int scrolled) {
+        Set<Map.Entry<Integer, Row>> entries = rowMap.entrySet();
+        for (Map.Entry<Integer, Row> entry :
+                entries) {
+            entry.getValue().updateCoordinate(scrolled);
+
         }
     }
 }

@@ -21,6 +21,7 @@ public class Row {
     private int coordinate = NaN;
     private int rowHeight = NaN;
     private RecyclerView.LayoutManager layoutManager;
+    /*package*/ int index;
 
     public Row(RecyclerView.LayoutManager layoutManager) {
         this.layoutManager = layoutManager;
@@ -87,7 +88,25 @@ public class Row {
      *
      * @param delta applied to coordinate
      */
-    public void updateCooordinate(int delta) {
+    public void updateCoordinate(int delta) {
         coordinate += delta;
+    }
+
+    public int getEnd() {
+        return coordinate + getRowHeight();
+    }
+
+    public int getStart(){
+        return coordinate;
+    }
+
+    public View lastView() {
+        if (!views.isEmpty())
+            return views.get(views.size() - 1);
+        return null;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
     }
 }

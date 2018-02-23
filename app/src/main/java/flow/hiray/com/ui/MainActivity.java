@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
                 "SakuraCherry Moi",
                 "Bob Dylan","RxUnfur","Tinker","solidity",
                 "Etherium","Bitcoin","EOS","otcbtc.com","Reksai","MingMing",
-                "Blander","FireMan","Freaky","psycho","Wolf","Vampire");
+                "Blander","FireMan","Freaky","psycho","Wolf","Vampire",
+                "NNNN","NNNN","NNNN","NNNN","NNNN","NNNN","NNNN","NNNN");
     }
 }

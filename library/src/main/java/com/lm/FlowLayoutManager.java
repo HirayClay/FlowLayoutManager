@@ -123,12 +123,51 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         return scrollInternal(dy, mRecyclerEx, state);
     }
 
-    private int scrollInternal(int dy, RecyclerEx wrap, RecyclerView.State state) {
-        return 0;
+    /*处理滑动*/
+    private int scrollInternal(int dy, RecyclerEx recyclerEx, RecyclerView.State state) {
+        if (getChildCount() == 0 || dy == 0) {
+            return 0;
+        }
+        mLayoutState.mRecycle = true;
+        ensureLayoutState();
+        final int layoutDirection = dy > 0 ? LayoutState.LAYOUT_END : LayoutState.LAYOUT_START;
+        final int absDy = Math.abs(dy);
+        updateLayoutState(layoutDirection, absDy, state);
+        final int consumed = mLayoutState.mScrollingOffset
+                + fill(recyclerEx, mLayoutState, state);
+        if (consumed < 0) {
+            return 0;
+        }
+        final int scrolled = absDy > consumed ? layoutDirection * consumed : dy;
+        mOrientationHelper.offsetChildren(-scrolled);
+        mLayoutState.mLastScrollDelta = scrolled;
+        mRecyclerEx.updateRowCoordinate(-scrolled);
+        return scrolled;
     }
 
-    private void updateLayoutState(int layoutDirection, int absDy, RecyclerView.State state) {
+    private void updateLayoutState(int layoutDirection, int requiredSpace, RecyclerView.State state) {
+        mLayoutState.mLayoutDirection = layoutDirection;
+        int scrollingOffset;
+        if (layoutDirection == LayoutState.LAYOUT_END) {
+            Row row = getRowClosestToEnd();
+            mLayoutState.mItemDirection = LayoutState.ITEM_DIRECTION_TAIL;
+            mLayoutState.mCurrentPosition = row.index + mLayoutState.mItemDirection;
+            mLayoutState.mOffset = row.getEnd();
+            // calculate how much we can scroll without adding new children (independent of layout)
+            scrollingOffset = row.getEnd()
+                    - mOrientationHelper.getEndAfterPadding();
+        } else {
+            Row row = getRowClosestToStart();
+            mLayoutState.mItemDirection = LayoutState.ITEM_DIRECTION_HEAD;
+            mLayoutState.mCurrentPosition = row.index + mLayoutState.mItemDirection;
+            mLayoutState.mOffset = row.getStart();
+            // calculate how much we can scroll without adding new children (independent of layout)
+            scrollingOffset = -row.getStart()
+                    + mOrientationHelper.getStartAfterPadding();
+        }
 
+        mLayoutState.mAvailable = requiredSpace;
+        mLayoutState.mScrollingOffset = scrollingOffset;
     }
 
     @Override
@@ -164,8 +203,12 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
     }
 
 
-    public View getRowClosestToStart() {
-        return rowClosestToStart;
+    public Row getRowClosestToStart() {
+        return mRecyclerEx.getRowForView(getChildAt(0));
+    }
+
+    public Row getRowClosestToEnd() {
+        return mRecyclerEx.getRowForView(getChildAt(getChildCount() - 1));
     }
 
     class LayoutState {
