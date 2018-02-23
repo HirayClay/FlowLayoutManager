@@ -95,9 +95,11 @@ public class RecyclerEx {
                 remainingHeight -= row.getRowHeight();
                 row.setCoordinate(start);
                 start += row.getRowHeight();
-                rowMap.put(rowIndex++, row);
+                row.setIndex(rowIndex);
+                rowMap.put(rowIndex, row);
+                rowIndex++;
                 row = new Row(layoutManager);
-                row.setIndex(rowIndex-1);
+                row.setCoordinate(start);
                 row.addView(view);
                 remainingWidth = width - viewWidth;
             }

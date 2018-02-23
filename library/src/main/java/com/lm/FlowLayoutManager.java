@@ -3,9 +3,6 @@ package com.lm;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static android.support.v7.widget.RecyclerView.NO_POSITION;
 
 /**
@@ -16,9 +13,7 @@ import static android.support.v7.widget.RecyclerView.NO_POSITION;
 
 public class FlowLayoutManager extends RecyclerView.LayoutManager {
 
-    public static final int INVALID_OFFSET = Integer.MIN_VALUE;
-    List<Row> rows = new ArrayList<>();
-    private View rowClosestToStart;
+    private static final int INVALID_OFFSET = Integer.MIN_VALUE;
     private RecyclerEx mRecyclerEx;
     private AnchorRow mAnchorInfo = new AnchorRow();
     private OrientationHelper mOrientationHelper;
@@ -82,7 +77,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         LayoutRowResult layoutRowResult = mLayoutRowResult;
         while (remainingSpace > 0 && layoutState.hasMore(state)) {
             layoutRowResult.resetInternal();
-            layoutChunk(recyclerEx, state, layoutState, layoutRowResult);
+            layoutChunk(recyclerEx, layoutState, layoutRowResult);
             layoutState.mOffset += layoutRowResult.mConsumed * layoutState.mLayoutDirection;
             if (!layoutRowResult.mIgnoreConsumed || !state.isPreLayout()/* || layoutState.mScrapList != null*/)
                 remainingSpace -= layoutRowResult.mConsumed;
@@ -99,7 +94,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         return start - layoutState.mAvailable;
     }
 
-    private void layoutChunk(RecyclerEx recyclerEx, RecyclerView.State state,
+    private void layoutChunk(RecyclerEx recyclerEx,
                              LayoutState layoutState, LayoutRowResult layoutRowResult) {
         Row row = layoutState.next(recyclerEx);
         if (row == null) {
@@ -119,6 +114,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 
     private LayoutState mLayoutState = new LayoutState();
 
+    @SuppressWarnings("unused")
     private int scrollBy(int dy, RecyclerView.Recycler recycler, RecyclerView.State state) {
         return scrollInternal(dy, mRecyclerEx, state);
     }
@@ -145,6 +141,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         return scrolled;
     }
 
+    @SuppressWarnings("unused")
     private void updateLayoutState(int layoutDirection, int requiredSpace, RecyclerView.State state) {
         mLayoutState.mLayoutDirection = layoutDirection;
         int scrollingOffset;
@@ -175,6 +172,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         return true;
     }
 
+    @SuppressWarnings("unused")
     private void updateAnchorInfo(RecyclerEx recyclerEx, RecyclerView.State state, AnchorRow anchorInfo) {
         //rows is empty,wo need build from scratch
 //        if (updateAnchorFromPendingData(state, anchorInfo)) {
@@ -192,6 +190,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 
     }
 
+    @SuppressWarnings("unused")
     private boolean updateAnchorFromRow(RecyclerEx mRecyclerEx, RecyclerView.State state, AnchorRow anchorInfo) {
         return false;
     }
@@ -203,23 +202,21 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
     }
 
 
-    public Row getRowClosestToStart() {
+    private Row getRowClosestToStart() {
         return mRecyclerEx.getRowForView(getChildAt(0));
     }
 
-    public Row getRowClosestToEnd() {
+    private Row getRowClosestToEnd() {
         return mRecyclerEx.getRowForView(getChildAt(getChildCount() - 1));
     }
 
     class LayoutState {
 
-        static final String TAG = "LLM#LayoutState";
-
         static final int LAYOUT_START = -1;
 
         static final int LAYOUT_END = 1;
 
-        static final int INVALID_LAYOUT = Integer.MIN_VALUE;
+//        static final int INVALID_LAYOUT = Integer.MIN_VALUE;
 
         static final int ITEM_DIRECTION_HEAD = -1;
 
@@ -269,7 +266,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
         /**
          * Used if you want to pre-layout items that are not yet visible.
          * The difference with {@link #mAvailable} is that, when recycling, distance laid out for
-         * {@link #mExtra} is not considered to avoid recycling visible children.
+         * mExtra is not considered to avoid recycling visible children.
          */
         int mExtra = 0;
 
@@ -338,6 +335,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
                     + '}';
         }
 
+        @SuppressWarnings("unused")
         boolean isViewValidAsAnchor(View child, RecyclerView.State state) {
             RecyclerView.LayoutParams lp = (RecyclerView.LayoutParams) child.getLayoutParams();
             return !lp.isItemRemoved() && lp.getViewLayoutPosition() >= 0
@@ -391,6 +389,7 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 //            }
 //        }
 
+        @SuppressWarnings("unused")
         public void assignFromView(View child) {
 //            if (mLayoutFromEnd) {
 //                mCoordinate = mOrientationHelper.getDecoratedEnd(child)
@@ -405,10 +404,10 @@ public class FlowLayoutManager extends RecyclerView.LayoutManager {
 
     class LayoutRowResult {
 
-        public int mConsumed;
-        public boolean mFinished;
-        public boolean mIgnoreConsumed;
-        public boolean mFocusable;
+        int mConsumed;
+        boolean mFinished;
+        boolean mIgnoreConsumed;
+        boolean mFocusable;
 
         void resetInternal() {
             mConsumed = 0;
